@@ -12,24 +12,41 @@ import bs4
 import requests
 import loguru
 
+import re
+
 
 def scrape_data_point():
     """
-    Scrapes the main headline from The Daily Pennsylvanian home page.
+    Scrapes the most read article from DP home page
 
     Returns:
-        str: The headline text if found, otherwise an empty string.
+        str: The most read article's headline if found, otherwise an empty string.
     """
     req = requests.get("https://www.thedp.com")
     loguru.logger.info(f"Request URL: {req.url}")
     loguru.logger.info(f"Request status code: {req.status_code}")
 
+    data_point = ""
     if req.ok:
         soup = bs4.BeautifulSoup(req.text, "html.parser")
-        target_element = soup.find("a", class_="frontpage-link")
-        data_point = "" if target_element is None else target_element.text
-        loguru.logger.info(f"Data point: {data_point}")
-        return data_point
+        # Get backend script url
+        script_list = soup.find_all("script", recursive=True)
+        print(len(script_list))
+        m = re.search(r"https\:\/\/[\w\-\.a-zA-Z0-9]+?\/dropcap\/DP", "\n".join([str(x.contents) for x in script_list]))
+        print(m)
+        if m == None:
+            raise Exception()
+        url = m.group()
+        # Grab most read article from backend url
+        req2 = requests.get(url)
+        if req2.ok:
+            try:
+                data_point = req2.json()['result'][0]['gaTitle']
+                loguru.logger.info(f"Data point: {data_point}")
+            except (requests.exceptions.JSONDecodeError, IndexError):
+                loguru.logger.info("JSON payload was malformed")
+    
+    return data_point
 
 
 if __name__ == "__main__":
