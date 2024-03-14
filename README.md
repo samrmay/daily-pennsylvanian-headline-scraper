@@ -20,6 +20,9 @@ The workflow defined in `.github/workflows/scrape.yaml` runs on a defined schedu
 4. Run the python script `script.py` to scrape data
 5. Commit any updated data files to the Git repository
 
+## Samrmay changes
+I modified the scraper to grab the most read article from the DP home page. This content is actually dynamically rendered, so there is a JS script embedded in the site which dynamically builds the 10 most read article html elements. The quickest way around this for me was to scrape the url which is hit in this JS script and request the top 10 articles myself via a second request. I believe this is the most robust way to retrieve this data, and does not make any more requests to the front or backend than a normal user client would. A JSON containing the 10 articles is then returned from the backend request, at which point we take the top article's title and return.
+
 ## Scheduling
 
 The workflow schedule is configured with [cron syntax](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule) to run:
